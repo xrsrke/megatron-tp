@@ -10,6 +10,7 @@ import megatron.initialize as mpu
 import megatron.layers as layers
 from megatron.pipegoose_utils import spawn
 
+from megatron.logger import Logger
 
 class IdentityLayer2D(torch.nn.Module):
     def __init__(self, m, n):
@@ -32,6 +33,8 @@ def run_test_column_parallel_linear(rank, world_size, port, model_parallel_size)
         print("> testing ColumnParallelLinear with model parallel size: {}".format(model_parallel_size))
     model_parallel_size = mpu.get_model_parallel_world_size()
 
+    Logger()(f"rank = {mpu.get_model_parallel_rank()}")
+
     seed = 12345
     set_random_seed(seed)
     input_size_coeff = 13
@@ -41,12 +44,10 @@ def run_test_column_parallel_linear(rank, world_size, port, model_parallel_size)
     batch_size = 7
 
     # Network
-    # identity_layer = IdentityLayer2D(batch_size, input_size).cuda()
-    identity_layer = IdentityLayer2D(batch_size, input_size)
-    # linear_layer = layers.ColumnParallelLinear(input_size, output_size, keep_master_weight_for_test=True).cuda()
-    linear_layer = layers.ColumnParallelLinear(input_size, output_size, keep_master_weight_for_test=True)
-    # loss_weight = torch.randn([batch_size, output_size]).cuda()
-    loss_weight = torch.randn([batch_size, output_size])
+    identity_layer = IdentityLayer2D(batch_size, input_size).cuda()
+    linear_layer = layers.ColumnParallelLinear(input_size, output_size, keep_master_weight_for_test=True).cuda()
+    loss_weight = torch.randn([batch_size, output_size]).cuda()
+
     # Forward
     input_ = identity_layer()
     output = linear_layer(input_)
@@ -57,11 +58,9 @@ def run_test_column_parallel_linear(rank, world_size, port, model_parallel_size)
     # Values.
     dLdY = loss_weight
     X = identity_layer.weight
-    # A = linear_layer.master_weight.cuda()
-    A = linear_layer.master_weight
+    A = linear_layer.master_weight.cuda()
     dLdA = torch.matmul(dLdY.t(), X)
-    # dLdb = torch.matmul(torch.ones(batch_size, 1).cuda().t(), dLdY).view(-1)
-    dLdb = torch.matmul(torch.ones(batch_size, 1).t(), dLdY).view(-1)
+    dLdb = torch.matmul(torch.ones(batch_size, 1).cuda().t(), dLdY).view(-1)
     dLdX = torch.matmul(dLdY, A)
 
     rank = mpu.get_model_parallel_rank()

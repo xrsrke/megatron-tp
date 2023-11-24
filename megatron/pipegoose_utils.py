@@ -2,6 +2,7 @@ import random
 import socket
 from functools import partial
 from typing import Callable
+from megatron.logger import Logger
 
 import torch.multiprocessing as mp
 
@@ -13,6 +14,7 @@ def find_free_port(min_port: int = 2000, max_port: int = 65000) -> int:
             with socket.socket() as sock:
                 sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
                 sock.bind(("localhost", port))
+                Logger()("Found free port: {}".format(port))
                 return port
         except OSError as e:
             raise e
