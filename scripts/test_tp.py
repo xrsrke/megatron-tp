@@ -27,9 +27,6 @@ def run_test_column_parallel_linear(rank, world_size, port, model_parallel_size)
     # dist_init(rank, model_parallel_size, filename, filename_rpc)
     dist_init(rank, model_parallel_size, port)
 
-    # print("dist_init")
-    # assert 1 == 2
-
     mpu.initialize_model_parallel(model_parallel_size)
     if torch.distributed.get_rank() == 0:
         print("> testing ColumnParallelLinear with model parallel size: {}".format(model_parallel_size))
