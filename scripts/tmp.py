@@ -3,7 +3,7 @@ import torch.nn as nn
 import megatron.layers as layers
 import megatron.initialize as mpu
 from copy import deepcopy
-from megatron.pipegoose_utils import spawn
+from megatron.pipegoose_utils import spawn, write_bin, read_bin
 from megatron.testing import dist_init, set_random_seed
 from megatron.logger import Logger
 from megatron.utils import divide_and_check_no_remainder
@@ -80,8 +80,7 @@ def func(rank, world_size, port, model_parallel_size):
     set_random_seed(seed)
 
     model = NN(input_size=32 * 32, output_size=10)
-    # model_tp = tensor_parallel_pipegoose(deepcopy(model))
-    model_tp = tensor_parallel_megatron(deepcopy(model))
+    model_tp = tensor_parallel_pipegoose(deepcopy(model))
 
 
 if __name__ == "__main__":

@@ -1,0 +1,76 @@
+[1m[93m[W 2023-11-24 15:14:48][0m ...n-tp/megatron/logger.py.83: No logs files will be created (dir_logs attribute is empty)
+[1m[90m[I 2023-11-24 15:14:48][0m ...tron/pipegoose_utils.py.22: Found free port: 14703
+[W socket.cpp:663] [c10d] The client socket has failed to connect to [localhost]:14703 (errno: 99 - Cannot assign requested address).
+dist init r=0, world=2
+> initializing model parallel with size 2
+> initializing ddp with size 1
+> initializing pipeline with size 1
+> testing ColumnParallelLinear with model parallel size: 2
+[1m[93m[W 2023-11-24 15:14:52][0m ...n-tp/megatron/logger.py.83: No logs files will be created (dir_logs attribute is empty)
+[1m[90m[I 2023-11-24 15:14:52][0m ...cripts/run_tp_mnist.py.162: rank = 0
+> initializing model parallel cuda seeds on global rank 0, model parallel rank 0, and data parallel rank 0 with model parallel seed: 15063 and data parallel seed: 12345
+dist init r=1, world=2
+[1m[93m[W 2023-11-24 15:14:52][0m ...n-tp/megatron/logger.py.83: No logs files will be created (dir_logs attribute is empty)
+[1m[90m[I 2023-11-24 15:14:52][0m ...cripts/run_tp_mnist.py.162: rank = 1
+[1m[90m[I 2023-11-24 15:14:54][0m ...cripts/run_tp_mnist.py.185: rank=1, model is moved to device: cuda:1
+[1m[90m[I 2023-11-24 15:14:54][0m ...cripts/run_tp_mnist.py.185: rank=0, model is moved to device: cuda:0
+epoch=0, rank=0, train_loss=0.33163952827453613, ref_train_loss=0.33163952827453613
+epoch=1, rank=0, train_loss=0.3324284851551056, ref_train_loss=0.3324284851551056
+epoch=2, rank=0, train_loss=0.40825575590133667, ref_train_loss=0.40825575590133667
+epoch=3, rank=0, train_loss=1.8943748474121094, ref_train_loss=1.8943748474121094
+epoch=4, rank=0, train_loss=7.763700485229492, ref_train_loss=7.763700485229492
+epoch=5, rank=0, train_loss=7.299785614013672, ref_train_loss=7.299785614013672
+epoch=6, rank=0, train_loss=10.440173149108887, ref_train_loss=10.440173149108887
+epoch=7, rank=0, train_loss=12.041128158569336, ref_train_loss=12.041128158569336
+epoch=8, rank=0, train_loss=13.313788414001465, ref_train_loss=13.313788414001465
+epoch=9, rank=0, train_loss=17.278263092041016, ref_train_loss=17.278263092041016
+epoch=10, rank=0, train_loss=15.698952674865723, ref_train_loss=15.698952674865723
+epoch=11, rank=0, train_loss=16.156124114990234, ref_train_loss=16.156124114990234
+epoch=12, rank=0, train_loss=13.233519554138184, ref_train_loss=13.233519554138184
+epoch=13, rank=0, train_loss=12.550055503845215, ref_train_loss=12.550055503845215
+epoch=14, rank=0, train_loss=8.288689613342285, ref_train_loss=8.288689613342285
+epoch=15, rank=0, train_loss=9.501703262329102, ref_train_loss=9.501703262329102
+epoch=16, rank=0, train_loss=6.271505355834961, ref_train_loss=6.271505355834961
+epoch=17, rank=0, train_loss=8.525224685668945, ref_train_loss=8.525224685668945
+epoch=18, rank=0, train_loss=7.72813606262207, ref_train_loss=7.72813606262207
+epoch=19, rank=0, train_loss=6.103260040283203, ref_train_loss=6.103259086608887
+epoch=20, rank=0, train_loss=5.80649471282959, ref_train_loss=5.806494235992432
+epoch=21, rank=0, train_loss=3.815361738204956, ref_train_loss=3.8153598308563232
+epoch=22, rank=0, train_loss=2.82780385017395, ref_train_loss=2.827802896499634
+epoch=23, rank=0, train_loss=4.470336437225342, ref_train_loss=4.470336437225342
+epoch=24, rank=0, train_loss=3.210221529006958, ref_train_loss=3.210223436355591
+epoch=25, rank=0, train_loss=2.253168821334839, ref_train_loss=2.2531681060791016
+epoch=26, rank=0, train_loss=2.265538454055786, ref_train_loss=2.265537738800049
+epoch=27, rank=0, train_loss=1.883423089981079, ref_train_loss=1.8834218978881836
+epoch=28, rank=0, train_loss=1.3896549940109253, ref_train_loss=1.3896598815917969
+epoch=29, rank=0, train_loss=1.7039997577667236, ref_train_loss=1.70400071144104
+epoch=30, rank=0, train_loss=1.2669212818145752, ref_train_loss=1.2669206857681274
+epoch=31, rank=0, train_loss=2.387127637863159, ref_train_loss=2.3871302604675293
+epoch=32, rank=0, train_loss=1.246345043182373, ref_train_loss=1.2463370561599731
+epoch=33, rank=0, train_loss=2.132045030593872, ref_train_loss=2.132014751434326
+epoch=34, rank=0, train_loss=0.6294803023338318, ref_train_loss=0.629467785358429
+epoch=35, rank=0, train_loss=0.3855781555175781, ref_train_loss=0.3855727016925812
+epoch=36, rank=0, train_loss=0.3614577651023865, ref_train_loss=0.36145445704460144
+epoch=37, rank=0, train_loss=0.3711479604244232, ref_train_loss=0.371139794588089
+epoch=38, rank=0, train_loss=0.3784411549568176, ref_train_loss=0.378431499004364
+epoch=39, rank=0, train_loss=0.4433779716491699, ref_train_loss=0.44335031509399414
+epoch=40, rank=0, train_loss=0.4928154945373535, ref_train_loss=0.4927801787853241
+epoch=41, rank=0, train_loss=0.7998145222663879, ref_train_loss=0.799705445766449
+epoch=42, rank=0, train_loss=0.8277795314788818, ref_train_loss=0.8278264403343201
+epoch=43, rank=0, train_loss=1.5277689695358276, ref_train_loss=1.5279308557510376
+epoch=44, rank=0, train_loss=0.6031821966171265, ref_train_loss=0.6032507419586182
+epoch=45, rank=0, train_loss=0.4832673966884613, ref_train_loss=0.483411580324173
+epoch=46, rank=0, train_loss=0.6006839275360107, ref_train_loss=0.6010908484458923
+epoch=47, rank=0, train_loss=1.1122381687164307, ref_train_loss=1.1138354539871216
+epoch=48, rank=0, train_loss=1.1643786430358887, ref_train_loss=1.1627302169799805
+epoch=49, rank=0, train_loss=2.2075514793395996, ref_train_loss=2.2040815353393555
+epoch=50, rank=0, train_loss=0.9543582201004028, ref_train_loss=0.9538376331329346
+epoch=51, rank=0, train_loss=1.7765640020370483, ref_train_loss=1.7739866971969604
+epoch=52, rank=0, train_loss=0.5915648341178894, ref_train_loss=0.5929075479507446
+epoch=53, rank=0, train_loss=0.3890344798564911, ref_train_loss=0.3926471471786499
+epoch=54, rank=0, train_loss=0.4449824392795563, ref_train_loss=0.45195865631103516
+epoch=55, rank=0, train_loss=0.7219672203063965, ref_train_loss=0.7462431788444519
+epoch=56, rank=0, train_loss=0.8989103436470032, ref_train_loss=0.9045642614364624
+epoch=57, rank=0, train_loss=1.805201768875122, ref_train_loss=1.8037205934524536
+epoch=58, rank=0, train_loss=0.534345269203186, ref_train_loss=0.5345982909202576
+epoch=59, rank=0, train_loss=0.5090481638908386, ref_train_loss=0.5138357877731323

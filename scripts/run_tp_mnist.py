@@ -9,7 +9,7 @@ from torchvision import datasets, transforms
 import megatron.layers as layers
 from megatron.logger import Logger
 import megatron.initialize as mpu
-from megatron.pipegoose_utils import spawn
+from megatron.pipegoose_utils import spawn, write_bin, read_bin
 from megatron.testing import dist_init, set_random_seed
 from megatron.utils import divide_and_check_no_remainder
 import wandb
@@ -136,7 +136,7 @@ def tensor_parallel_megatron(model):
 
     in_features = model.debug_single_mlp.in_features
     out_features = model.debug_single_mlp.out_features
-    linear_layer = layers.ColumnParallelLinear(in_features, out_features, keep_master_weight_for_test=True)
+    linear_layer = layers.ColumnParallelLinear(in_features, out_features, keep_master_weight_for_test=False)
     
     # Split weight and bias
     linear_layer.weight.data = get_partition(model.debug_single_mlp.weight.data, dim=0)
@@ -150,8 +150,7 @@ def tensor_parallel_megatron(model):
 def run_column_parallel(rank, world_size, port, model_parallel_size):
     NUM_EPOCHS = 60
     LR = 2e-1
-    SEED = 42
-    BATCH_SIZE = 1024
+    SEED = 12345
 
     dist_init(rank, model_parallel_size, port)
 
@@ -162,8 +161,7 @@ def run_column_parallel(rank, world_size, port, model_parallel_size):
 
     Logger()(f"rank = {mpu.get_model_parallel_rank()}")
 
-    seed = 12345
-    set_random_seed(seed)
+    set_random_seed(SEED)
 
     # Load batch of data
     debug_batch = torch.load("debug_batch.pt")
@@ -175,8 +173,8 @@ def run_column_parallel(rank, world_size, port, model_parallel_size):
 
     dist.barrier()
 
-    # model = tensor_parallel_pipegoose(model)
-    model = tensor_parallel_megatron(model)
+    model = tensor_parallel_pipegoose(model)
+    # model = tensor_parallel_megatron(model)
     optim = SGD(model.parameters(), lr=LR)
     criterion = nn.CrossEntropyLoss()
 
@@ -194,66 +192,64 @@ def run_column_parallel(rank, world_size, port, model_parallel_size):
     ref_model.train()
     dist.barrier()
 
-    if rank == 0:
+    # if rank == 0:
 
-        def get_time_name():
-            import datetime
+    #     def get_time_name():
+    #         import datetime
 
-            today = datetime.datetime.now()
-            return today.strftime("%d/%m/%Y_%H:%M:%S")
+    #         today = datetime.datetime.now()
+    #         return today.strftime("%d/%m/%Y_%H:%M:%S")
 
-        wandb.init(
-            project="pipegoose",
-            name=f"{get_time_name()}.test_tp_mnist_converegence",
-            config={
-                "tensor_parallel_size": world_size,
-                "model": "NN",
-                "dataset": "MNIST",
-                "epochs": NUM_EPOCHS,
-                "learning_rate": LR,
-                "seed": SEED,
-                "batch_size": BATCH_SIZE,
-            },
-        )
-
-        # wandb log image
-        # wandb.log({"examples": [wandb.Image(img.numpy()) for img in debug_batch]})
+    #     wandb.init(
+    #         project="pipegoose",
+    #         name=f"{get_time_name()}.test_tp_mnist_converegence",
+    #         config={
+    #             "tensor_parallel_size": world_size,
+    #             "model": "NN",
+    #             "dataset": "MNIST",
+    #             "epochs": NUM_EPOCHS,
+    #             "learning_rate": LR,
+    #             "seed": SEED,
+    #         },
+    #     )
 
     for epoch in range(NUM_EPOCHS):
-        Logger()(f"rank={rank}, epoch={epoch}")
+    
+        if epoch == 19:
+            print()
 
         inputs, labels = debug_batch.to(device), debug_target.to(device)
-        
-        outputs = model(inputs)
-        _, predictions = torch.max(outputs, dim=1)
-        loss = criterion(outputs, labels)
 
         ref_outputs = ref_model(inputs)
-        _, ref_predictions = torch.max(ref_outputs, dim=1)
         ref_loss = ref_criterion(ref_outputs, labels)
+        
+        outputs = model(inputs)
+        loss = criterion(outputs, labels)
 
-        optim.zero_grad()
-        loss.backward()
-        optim.step()
-
+        # TODO: maybe register_hook backward: https://pytorch.org/docs/stable/notes/autograd.html#backward-hooks-execution
         ref_optim.zero_grad()
         ref_loss.backward()
         ref_optim.step()
 
-        Logger()(f"epoch={epoch}, rank={rank}, train_loss={loss}, ref_train_loss={ref_loss}")
-
+        optim.zero_grad()
+        loss.backward()
+        optim.step()
+        
         if rank == 0:
-            wandb.log(
-                {
-                    "train_loss": loss,
-                    "ref_train_loss": ref_loss,
-                    "epoch": epoch,
-                }
-            )
+            print(f"epoch={epoch}, rank={rank}, train_loss={loss}, ref_train_loss={ref_loss}")
+
+        # if rank == 0:
+        #     wandb.log(
+        #         {
+        #             "train_loss": loss,
+        #             "ref_train_loss": ref_loss,
+        #             "epoch": epoch,
+        #         }
+        #     )
 
 
     dist.barrier()
-    wandb.finish()
+    # wandb.finish()
     model.cpu()
 
 if __name__ == "__main__":
