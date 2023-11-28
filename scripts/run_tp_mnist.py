@@ -200,6 +200,8 @@ def run_column_parallel(rank, world_size, port, model_parallel_size):
     ref_model.train()
     dist.barrier()
 
+    state_ref = {}
+
     if rank == 0:
         state_0 = {}
     elif rank == 1:
@@ -238,6 +240,9 @@ def run_column_parallel(rank, world_size, port, model_parallel_size):
         outputs = model(inputs)
         loss = criterion(outputs, labels)
 
+        ref_model.debug_single_mlp.weight.register_hook(save_grad(state_ref, epoch, "weight"))
+        ref_model.debug_single_mlp.bias.register_hook(save_grad(state_ref, epoch, "bias"))
+
         if rank == 0:
             model.debug_single_mlp.weight.register_hook(save_grad(state_0, epoch, "weight"))
             model.debug_single_mlp.bias.register_hook(save_grad(state_0, epoch, "bias"))
@@ -268,14 +273,16 @@ def run_column_parallel(rank, world_size, port, model_parallel_size):
 
 
         dist.barrier()
-        
         # clear hook
+        ref_model.debug_single_mlp.weight._backward_hooks.clear()
         model.debug_single_mlp.weight._backward_hooks.clear()
         model.debug_single_mlp.bias._backward_hooks.clear()
 
         dist.barrier()
 
     dist.barrier()
+
+    torch.save(state_ref, "state_ref.pt")
 
     if rank == 0:
         torch.save(state_0, "state_0.pt")
