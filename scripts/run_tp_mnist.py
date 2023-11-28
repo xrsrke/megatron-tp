@@ -148,6 +148,7 @@ def tensor_parallel_megatron(model):
     return model
 
 def save_grad(state, epoch, param_name):
+    # TODO: maybe register_hook backward: https://pytorch.org/docs/stable/notes/autograd.html#backward-hooks-execution
     state[f"epoch_{epoch}"] = {}
     def hook(grad):
         state[f"epoch_{epoch}"][param_name] = grad
@@ -246,7 +247,6 @@ def run_column_parallel(rank, world_size, port, model_parallel_size):
 
         dist.barrier()
 
-        # TODO: maybe register_hook backward: https://pytorch.org/docs/stable/notes/autograd.html#backward-hooks-execution
         ref_optim.zero_grad()
         ref_loss.backward()
         ref_optim.step()
@@ -267,6 +267,14 @@ def run_column_parallel(rank, world_size, port, model_parallel_size):
             )
 
 
+        dist.barrier()
+        
+        # clear hook
+        model.debug_single_mlp.weight._backward_hooks.clear()
+        model.debug_single_mlp.bias._backward_hooks.clear()
+
+        dist.barrier()
+
     dist.barrier()
 
     if rank == 0:
@@ -274,11 +282,6 @@ def run_column_parallel(rank, world_size, port, model_parallel_size):
     elif rank == 1:
         torch.save(state_1, "state_1.pt")
     
-    dist.barrier()
-
-    # clear hook
-    model.debug_single_mlp.weight._backward_hooks.clear()
-    model.debug_single_mlp.bias._backward_hooks.clear()
 
     dist.barrier()                
 
