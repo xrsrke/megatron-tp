@@ -193,6 +193,7 @@ def run_column_parallel(rank, world_size, port, model_parallel_size):
     Logger()(f"rank={rank}, model is moved to device: {device}")
 
     ref_model.to(device)
+    Logger()(f"rank={rank}, ref_model is moved to device: {device}")
     ref_optim = SGD(ref_model.parameters(), lr=LR)
     ref_criterion = nn.CrossEntropyLoss()
 
@@ -200,11 +201,12 @@ def run_column_parallel(rank, world_size, port, model_parallel_size):
     ref_model.train()
     dist.barrier()
 
-    state_ref = {}
 
     if rank == 0:
+        state_ref_0 = {}
         state_0 = {}
     elif rank == 1:
+        state_ref_1 = {}
         state_1 = {}
 
     dist.barrier()
@@ -240,13 +242,15 @@ def run_column_parallel(rank, world_size, port, model_parallel_size):
         outputs = model(inputs)
         loss = criterion(outputs, labels)
 
-        ref_model.debug_single_mlp.weight.register_hook(save_grad(state_ref, epoch, "weight"))
-        ref_model.debug_single_mlp.bias.register_hook(save_grad(state_ref, epoch, "bias"))
 
         if rank == 0:
+            ref_model.debug_single_mlp.weight.register_hook(save_grad(state_ref_0, epoch, "weight"))
+            ref_model.debug_single_mlp.bias.register_hook(save_grad(state_ref_0, epoch, "bias"))
             model.debug_single_mlp.weight.register_hook(save_grad(state_0, epoch, "weight"))
             model.debug_single_mlp.bias.register_hook(save_grad(state_0, epoch, "bias"))
         elif rank == 1:
+            ref_model.debug_single_mlp.weight.register_hook(save_grad(state_ref_1, epoch, "weight"))
+            ref_model.debug_single_mlp.bias.register_hook(save_grad(state_ref_1, epoch, "bias"))
             model.debug_single_mlp.weight.register_hook(save_grad(state_1, epoch, "weight"))
             model.debug_single_mlp.bias.register_hook(save_grad(state_1, epoch, "bias"))
 
@@ -275,6 +279,7 @@ def run_column_parallel(rank, world_size, port, model_parallel_size):
         dist.barrier()
         # clear hook
         ref_model.debug_single_mlp.weight._backward_hooks.clear()
+        ref_model.debug_single_mlp.bias._backward_hooks.clear()
         model.debug_single_mlp.weight._backward_hooks.clear()
         model.debug_single_mlp.bias._backward_hooks.clear()
 
@@ -282,13 +287,13 @@ def run_column_parallel(rank, world_size, port, model_parallel_size):
 
     dist.barrier()
 
-    torch.save(state_ref, "state_ref.pt")
 
     if rank == 0:
+        torch.save(state_ref_0, "state_ref_0.pt")
         torch.save(state_0, "state_0.pt")
     elif rank == 1:
+        torch.save(state_ref_1, "state_ref_1.pt")
         torch.save(state_1, "state_1.pt")
-    
 
     dist.barrier()                
 
