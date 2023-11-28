@@ -147,6 +147,13 @@ def tensor_parallel_megatron(model):
     
     return model
 
+def save_grad(state, epoch, param_name):
+    state[f"epoch_{epoch}"] = {}
+    def hook(grad):
+        state[f"epoch_{epoch}"][param_name] = grad
+    return hook
+
+
 def run_column_parallel(rank, world_size, port, model_parallel_size):
     NUM_EPOCHS = 60
     LR = 2e-1
@@ -192,32 +199,36 @@ def run_column_parallel(rank, world_size, port, model_parallel_size):
     ref_model.train()
     dist.barrier()
 
-    # if rank == 0:
+    if rank == 0:
+        state_0 = {}
+    elif rank == 1:
+        state_1 = {}
 
-    #     def get_time_name():
-    #         import datetime
+    dist.barrier()
 
-    #         today = datetime.datetime.now()
-    #         return today.strftime("%d/%m/%Y_%H:%M:%S")
 
-    #     wandb.init(
-    #         project="pipegoose",
-    #         name=f"{get_time_name()}.test_tp_mnist_converegence",
-    #         config={
-    #             "tensor_parallel_size": world_size,
-    #             "model": "NN",
-    #             "dataset": "MNIST",
-    #             "epochs": NUM_EPOCHS,
-    #             "learning_rate": LR,
-    #             "seed": SEED,
-    #         },
-    #     )
+    if rank == 0:
+        def get_time_name():
+            import datetime
+
+            today = datetime.datetime.now()
+            return today.strftime("%d/%m/%Y_%H:%M:%S")
+
+        wandb.init(
+            project="pipegoose",
+            name=f"{get_time_name()}.test_tp_mnist_converegence",
+            config={
+                "tensor_parallel_size": world_size,
+                "model": "NN",
+                "dataset": "MNIST",
+                "epochs": NUM_EPOCHS,
+                "learning_rate": LR,
+                "seed": SEED,
+            },
+        )
 
     for epoch in range(NUM_EPOCHS):
     
-        if epoch == 19:
-            print()
-
         inputs, labels = debug_batch.to(device), debug_target.to(device)
 
         ref_outputs = ref_model(inputs)
@@ -225,6 +236,15 @@ def run_column_parallel(rank, world_size, port, model_parallel_size):
         
         outputs = model(inputs)
         loss = criterion(outputs, labels)
+
+        if rank == 0:
+            model.debug_single_mlp.weight.register_hook(save_grad(state_0, epoch, "weight"))
+            model.debug_single_mlp.bias.register_hook(save_grad(state_0, epoch, "bias"))
+        elif rank == 1:
+            model.debug_single_mlp.weight.register_hook(save_grad(state_1, epoch, "weight"))
+            model.debug_single_mlp.bias.register_hook(save_grad(state_1, epoch, "bias"))
+
+        dist.barrier()
 
         # TODO: maybe register_hook backward: https://pytorch.org/docs/stable/notes/autograd.html#backward-hooks-execution
         ref_optim.zero_grad()
@@ -238,18 +258,31 @@ def run_column_parallel(rank, world_size, port, model_parallel_size):
         if rank == 0:
             print(f"epoch={epoch}, rank={rank}, train_loss={loss}, ref_train_loss={ref_loss}")
 
-        # if rank == 0:
-        #     wandb.log(
-        #         {
-        #             "train_loss": loss,
-        #             "ref_train_loss": ref_loss,
-        #             "epoch": epoch,
-        #         }
-        #     )
+            wandb.log(
+                {
+                    "train_loss": loss,
+                    "ref_train_loss": ref_loss,
+                    "epoch": epoch,
+                }
+            )
 
 
     dist.barrier()
-    # wandb.finish()
+
+    if rank == 0:
+        torch.save(state_0, "state_0.pt")
+    elif rank == 1:
+        torch.save(state_1, "state_1.pt")
+    
+    dist.barrier()
+
+    # clear hook
+    model.debug_single_mlp.weight._backward_hooks.clear()
+    model.debug_single_mlp.bias._backward_hooks.clear()
+
+    dist.barrier()                
+
+    wandb.finish()
     model.cpu()
 
 if __name__ == "__main__":
